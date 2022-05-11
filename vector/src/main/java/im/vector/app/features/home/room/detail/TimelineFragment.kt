@@ -427,7 +427,7 @@ class TimelineFragment @Inject constructor(
 
         timelineViewModel.onEach(
                 RoomDetailViewState::syncState,
-                RoomDetailViewState::incrementalSyncStatus,
+                RoomDetailViewState::incrementalSyncRequestState,
                 RoomDetailViewState::pushCounter
         ) { syncState, incrementalSyncStatus, pushCounter ->
             views.syncStateView.render(
