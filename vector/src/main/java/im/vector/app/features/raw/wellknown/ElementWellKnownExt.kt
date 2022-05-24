@@ -16,6 +16,11 @@
 
 package im.vector.app.features.raw.wellknown
 
+import im.vector.app.BuildConfig
+import im.vector.app.features.crypto.keysrequest.OutboundSessionKeySharingStrategy
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.matrix.android.sdk.api.MatrixPatterns.getServerName
 import org.matrix.android.sdk.api.auth.data.SessionParams
 import org.matrix.android.sdk.api.extensions.tryOrNull
@@ -29,6 +34,23 @@ suspend fun RawService.getElementWellknown(sessionParams: SessionParams): Elemen
 }
 
 fun ElementWellKnown.isE2EByDefault() = elementE2E?.e2eDefault ?: riotE2E?.e2eDefault ?: true
+
+fun ElementWellKnown?.getOutboundSessionKeySharingStrategy(): OutboundSessionKeySharingStrategy {
+    return when (this?.elementE2E?.outboundsKeyPreSharingMode) {
+        "on_room_opening" -> OutboundSessionKeySharingStrategy.WhenEnteringRoom
+        "on_typing" -> OutboundSessionKeySharingStrategy.WhenTyping
+        "disabled" -> OutboundSessionKeySharingStrategy.WhenSendingEvent
+        else -> BuildConfig.outboundSessionKeySharingStrategy
+    }
+}
+
+fun CoroutineScope.withElementWellKnown(rawService: RawService, sessionParams: SessionParams, block: ((ElementWellKnown?) -> Unit)) {
+    launch(Dispatchers.IO) {
+        rawService
+                .getElementWellknown(sessionParams)
+                .let { block(it) }
+    }
+}
 
 fun ElementWellKnown.isSecureBackupRequired() = elementE2E?.secureBackupRequired
         ?: riotE2E?.secureBackupRequired
