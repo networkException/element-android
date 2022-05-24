@@ -364,22 +364,29 @@ class HomeActivityViewModel @AssistedInject constructor(
                         // Try to initialize cross signing in background if possible
                         Timber.d("Initialize cross signing...")
                         try {
-                            session.cryptoService().crossSigningService().awaitCrossSigninInitialization { response, errCode ->
-                                // We missed server grace period or it's not setup, see if we remember locally password
-                                if (response.nextUncompletedStage() == LoginFlowTypes.PASSWORD &&
-                                        errCode == null &&
-                                        reAuthHelper.data != null) {
-                                    resume(
-                                            UserPasswordAuth(
-                                                    session = response.session,
-                                                    user = session.myUserId,
-                                                    password = reAuthHelper.data
-                                            )
-                                    )
-                                    Timber.d("Initialize cross signing SUCCESS")
-                                } else {
-                                    resumeWithException(Exception("Cannot silently initialize cross signing, UIA missing"))
-                                }
+                            awaitCallback<Unit> {
+                                session.cryptoService().crossSigningService().initializeCrossSigning(
+                                        object : UserInteractiveAuthInterceptor {
+                                            override fun performStage(flowResponse: RegistrationFlowResponse, errCode: String?, promise: Continuation<UIABaseAuth>) {
+                                                // We missed server grace period or it's not setup, see if we remember locally password
+                                                if (flowResponse.nextUncompletedStage() == LoginFlowTypes.PASSWORD &&
+                                                        errCode == null &&
+                                                        reAuthHelper.data != null) {
+                                                    promise.resume(
+                                                            UserPasswordAuth(
+                                                                    session = flowResponse.session,
+                                                                    user = session.myUserId,
+                                                                    password = reAuthHelper.data
+                                                            )
+                                                    )
+                                                } else {
+                                                    promise.resumeWithException(Exception("Cannot silently initialize cross signing, UIA missing"))
+                                                }
+                                            }
+                                        },
+                                        callback = it
+                                )
+                                Timber.d("Initialize cross signing SUCCESS")
                             }
                         } catch (failure: Throwable) {
                             Timber.e(failure, "Failed to initialize cross signing")
