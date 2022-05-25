@@ -541,13 +541,18 @@ class BootstrapSharedViewModel @AssistedInject constructor(
                 }
             }
             is BootstrapStep.AccountReAuth                   -> {
-                setState {
-                    copy(
-                            step = BootstrapStep.FirstForm(keyBackUpExist = doesKeyBackupExist, methods = this.secureBackupMethod),
-                            // Also reset the passphrase
-                            passphrase = null,
-                            passphraseRepeat = null
-                    )
+                if (state.canLeave) {
+                    _viewEvents.post(BootstrapViewEvents.SkipBootstrap(state.passphrase != null))
+                } else {
+                    // Go back to the first step
+                    setState {
+                        copy(
+                                step = BootstrapStep.FirstForm(keyBackUpExist = doesKeyBackupExist, methods = this.secureBackupMethod),
+                                // Also reset the passphrase
+                                passphrase = null,
+                                passphraseRepeat = null
+                        )
+                    }
                 }
             }
             BootstrapStep.Initializing                       -> {

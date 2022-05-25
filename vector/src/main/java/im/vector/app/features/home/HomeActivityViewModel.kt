@@ -134,7 +134,10 @@ class HomeActivityViewModel @AssistedInject constructor(
                 .onEach { info ->
                     val isVerified = info.getOrNull()?.isTrusted() ?: false
                     if (!isVerified && onceTrusted) {
-                        withElementWellKnown { sessionHasBeenUnverified(it) }
+                        viewModelScope.launch(Dispatchers.IO) {
+                            val elementWellKnown = rawService.getElementWellknown(safeActiveSession.sessionParams)
+                            sessionHasBeenUnverified(elementWellKnown)
+                        }
                     }
                     onceTrusted = isVerified
                 }
@@ -188,12 +191,8 @@ class HomeActivityViewModel @AssistedInject constructor(
                 .asFlow()
                 .onEach { status ->
                     when (status) {
-                        is SyncStatusService.Status.InitialSyncProgressing -> Unit
                         is SyncStatusService.Status.Idle                   -> {
-                            if (!hasCheckedBootstrap) {
-                                hasCheckedBootstrap = true
-                                withElementWellKnown { maybeVerifyOrBootstrapCrossSigning(it) }
-                            }
+                            maybeVerifyOrBootstrapCrossSigning()
                         }
                         else                                               -> Unit
                     }
@@ -206,9 +205,8 @@ class HomeActivityViewModel @AssistedInject constructor(
                 }
                 .launchIn(viewModelScope)
 
-        if (session.hasAlreadySynced() && !hasCheckedBootstrap) {
-            hasCheckedBootstrap = true
-            withElementWellKnown { maybeVerifyOrBootstrapCrossSigning(it) }
+        if (session.hasAlreadySynced()) {
+            maybeVerifyOrBootstrapCrossSigning()
         }
     }
 
@@ -250,16 +248,6 @@ class HomeActivityViewModel @AssistedInject constructor(
         }
     }
 
-    private fun withElementWellKnown(block: ((ElementWellKnown?) -> Unit)) {
-        viewModelScope.launch(Dispatchers.IO) {
-            activeSessionHolder.getSafeActiveSession()
-                    ?.let { rawService.getElementWellknown(it.sessionParams) }
-                    .let {
-                        block(it)
-                    }
-        }
-    }
-
     private fun sessionHasBeenUnverified(elementWellKnown: ElementWellKnown?) {
         val session = activeSessionHolder.getSafeActiveSession() ?: return
         val isSecureBackupRequired = elementWellKnown?.isSecureBackupRequired() ?: false
@@ -282,13 +270,18 @@ class HomeActivityViewModel @AssistedInject constructor(
         }
     }
 
-    private fun maybeVerifyOrBootstrapCrossSigning(elementWellKnown: ElementWellKnown?) {
+    private fun maybeVerifyOrBootstrapCrossSigning() {
+        // The contents of this method should only run once
+        if (hasCheckedBootstrap) return
+        hasCheckedBootstrap = true
+
         // We do not use the viewModel context because we do not want to tie this action to activity view model
         activeSessionHolder.getSafeActiveSession()?.coroutineScope?.launch(Dispatchers.IO) {
             val session = activeSessionHolder.getSafeActiveSession() ?: return@launch Unit.also {
                 Timber.w("## No session to init cross signing or bootstrap")
             }
 
+            val elementWellKnown = rawService.getElementWellknown(session.sessionParams)
             val isSecureBackupRequired = elementWellKnown?.isSecureBackupRequired() ?: false
 
             // In case of account creation, it is already done before

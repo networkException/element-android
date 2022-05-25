@@ -35,6 +35,7 @@ import im.vector.app.features.raw.wellknown.isSecureBackupRequired
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.matrix.android.sdk.api.MatrixCallback
+import org.matrix.android.sdk.api.extensions.orFalse
 import org.matrix.android.sdk.api.raw.RawService
 import org.matrix.android.sdk.api.session.Session
 import org.matrix.android.sdk.api.session.crypto.crosssigning.KEYBACKUP_SECRET_SSSS_NAME
@@ -114,11 +115,11 @@ class VerificationBottomSheetViewModel @AssistedInject constructor(
         session.cryptoService().verificationService().addListener(this)
 
         // This is async, but at this point should be in cache
-        // so ok to not wait until result
+        // so it's ok to not wait until result
         viewModelScope.launch(Dispatchers.IO) {
-            val wk = rawService.getElementWellknown(session.sessionParams)
+            val wellKnown = rawService.getElementWellknown(session.sessionParams)
             setState {
-                copy(isVerificationRequired = wk?.isSecureBackupRequired() ?: false)
+                copy(isVerificationRequired = wellKnown?.isSecureBackupRequired().orFalse())
             }
         }
 
