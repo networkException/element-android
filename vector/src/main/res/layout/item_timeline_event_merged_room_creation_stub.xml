@@ -33,6 +33,7 @@
             android:layout_height="60dp"
             android:layout_marginTop="20dp"
             android:importantForAccessibility="no"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/creationEncryptionTile"
             tools:srcCompat="@sample/room_round_avatars" />
@@ -63,17 +64,17 @@
 
         <TextView
             android:id="@+id/roomNameTileText"
-            style="@style/Widget.Vector.TextView.Title"
+            style="@style/Widget.Vector.TextView.HeadlineMedium"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
+            android:gravity="center_horizontal"
             android:textColor="?vctr_content_primary"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/creationTileRoomAvatarImageView"
-            app:layout_constraintBottom_toBottomOf="@id/creationTileRoomAvatarImageView"
-            app:layout_constraintTop_toTopOf="@id/creationTileRoomAvatarImageView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/creationTileRoomAvatarImageView"
             tools:text="@sample/rooms.json/data/name" />
 
         <TextView
@@ -86,7 +87,7 @@
             android:textColor="?vctr_content_secondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/creationTileRoomAvatarImageView"
+            app:layout_constraintTop_toBottomOf="@id/roomNameTileText"
             tools:text="@string/this_is_the_beginning_of_room_no_name" />
 
         <TextView
