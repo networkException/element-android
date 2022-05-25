@@ -19,6 +19,7 @@ package im.vector.app.features.home.room.detail.timeline.item
 import android.text.SpannableString
 import android.text.method.MovementMethod
 import android.text.style.ClickableSpan
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -151,12 +152,10 @@ abstract class MergedRoomCreationItem : BasedMergedItem<MergedRoomCreationItem.H
             isDirect -> {
                 if (isLocalRoom) {
                     holder.roomDescriptionText.apply {
-                        text = holder.view.resources.getString(
-                                R.string.send_your_first_msg_to_invite,
-                                roomSummary?.displayName ?: ""
-                        )
+                        text = holder.view.resources.getString(R.string.send_your_first_msg_to_invite)
+                        gravity = Gravity.CENTER_HORIZONTAL
                         setTextColor(attributes.colorProvider.getColorFromAttribute(R.attr.vctr_content_primary))
-                        TextViewCompat.setTextAppearance(this, R.style.TextAppearance_Vector_Headline_Medium)
+                        TextViewCompat.setTextAppearance(this, R.style.TextAppearance_Vector_Body)
                     }
                 } else {
                     holder.roomDescriptionText.text = holder.view.resources.getString(
